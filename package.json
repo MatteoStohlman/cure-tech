@@ -1,0 +1,49 @@
+{
+  "name": "create-react-app-redux-saga-boilerplate",
+  "description": "Filling the gaps for non-trival apps",
+  "keywords": [
+    "react",
+    "redux",
+    "saga"
+  ],
+  "version": "1.0.0",
+  "author": "David Broadhurst",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "bootstrap": "^3.3.7",
+    "firebase": "^5.5.7",
+    "jquery": "^3.3.1",
+    "material-ui": "^0.20.0",
+    "moment": "^2.22.2",
+    "numeral": "^2.0.6",
+    "prop-types": "^15.6.2",
+    "rc-slider": "^8.6.3",
+    "react": "^16.6.3",
+    "react-dom": "^16.6.3",
+    "react-redux": "^5.0.7",
+    "react-redux-firebase": "^2.1.9",
+    "react-router-dom": "^4.2.2",
+    "react-scripts": "^1.1.1",
+    "react-tap-event-plugin": "^3.0.2",
+    "recompose": "^0.30.0",
+    "redux": "^3.6.0",
+    "redux-form": "^7.3.0",
+    "redux-form-material-ui": "^4.3.2",
+    "redux-saga": "^0.16.0",
+    "validator": "^9.4.1"
+  },
+  "devDependencies": {
+    "@storybook/addon-actions": "^3.3.15",
+    "@storybook/addon-console": "^1.0.0",
+    "@storybook/react": "^3.3.15",
+    "storybook-addon-material-ui": "^0.8.2"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject",
+    "storybook": "start-storybook -p 9001 -c .storybook"
+  }
+}
