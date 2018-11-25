@@ -14,6 +14,7 @@ import {NOW} from 'Utilities/Date'
   import SectionHeader from 'components/Headers/SectionHeader'
   import Slider from 'components/Controls/Slider'
   import Margin from 'components/Layout/Margin'
+  import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip} from 'recharts';
 //ACTIONS//
 
 
@@ -32,6 +33,7 @@ const COMPONENT_NAME = ({
   //OTHER
     muiTheme,firebase,...props
 }) => {
+  console.log(room2.log);
   return (
     <div>
       <Paper style={{padding:20}}>
@@ -66,6 +68,17 @@ const COMPONENT_NAME = ({
           onChange={(value)=>updateRoom2Targets({...room2Targets,hum:value})}
         />
       </Paper>
+      {(room2.log) &&
+        <Paper>
+          <LineChart width={800} height={200} data={Object.keys(room2.log).filter((logId,index)=>index<100).map((logId)=>room2.log[logId])}>
+            <Line type="monotone" dataKey='hum' stroke="#8884d8" />
+              <CartesianGrid stroke="#ccc" />
+              <XAxis dataKey="timestamp" />
+              <YAxis />
+              <Tooltip />
+          </LineChart>
+        </Paper>
+      }
     </div>
   )
 }
@@ -101,7 +114,8 @@ export default compose(
       temp:(props.room2&&props.room2.currentState)?props.room2.currentState.temp:0,
       humidity:(props.room2&&props.room2.currentState)?props.room2.currentState.hum:0,
       isTempOn:props.room2 && props.room2.isTempOn,
-      isHumOn:props.room2 && props.room2.isHumOn
+      isHumOn:props.room2 && props.room2.isHumOn,
+      log:props.room2 && props.room2.log
     }
   })),
   muiThemeable(),
