@@ -58,7 +58,7 @@ const COMPONENT_NAME = ({
           </div>}
         </div>
         <div style={{...styles.split,height:100}}>
-          <div style={{...styles.subHeader,position:'absolute',top:2,right:5,color:'red'}} onClick={()=>updateTargetSelect('roomName','target_humidity')}>
+          <div style={{...styles.subHeader,position:'absolute',top:2,right:5,color:'red'}} onClick={()=>updateTargetSelect(roomName,'target_humidity')}>
             {numeral(roomObj.target_humidity).format('0.0')+"%"}
           </div>
           <div style={{...styles.centeredText,lineHeight:'100px',fontSize:25,}}>
