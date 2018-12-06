@@ -14,11 +14,11 @@ const COMPONENT_NAME = ({style,center,muiTheme,...props}) => {
   const styles = {
     fontSize:20,
     marginTop:5,
-    marginBottom:10,
     marginLeft:10,
     fontWeight:'bold',
     letterSpacing:'1px',
     textAlign:center?"center":'left',
+    textTransform:'capitalize',
     ...style
   }
   return (

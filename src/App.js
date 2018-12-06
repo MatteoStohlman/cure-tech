@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import Routes from './routes'
-
+import './globalStyles.css'
 import './App.css'
 
 class App extends Component {

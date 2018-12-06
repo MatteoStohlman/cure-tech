@@ -71,32 +71,32 @@ function checkStatus(change){
     return null;
   }
   return change.after.ref.parent.once('value').then((snapshot)=>{
-    let roomState = snapshot.val();
-    let targetTemp = roomState.target_temp.value
-    let targetHum = roomState.target_humidity.value
-    let currentTemp = roomState.currentState.temp
-    let currentHum = roomState.currentState.hum
-    let deviceConfig={led:1,temp:false,hum:false}
-    if(currentTemp>targetTemp){
-      deviceConfig.temp=true;
-      deviceConfig.led=0
-      change.after.ref.parent.child('isTempOn').set(true);
-    }else{
-      change.after.ref.parent.child('isTempOn').set(false);
-    }
-    if(currentHum<targetHum){
-      deviceConfig.hum=true
-      deviceConfig.led=0
-      change.after.ref.parent.child('isHumOn').set(true);
-    }else{
-      change.after.ref.parent.child('isHumOn').set(false);
-    }
-    //updateDeviceConfig("2814072940603127",deviceConfig);
-    change.after.ref.parent.child('log').push({hum:currentHum,temp:currentTemp,timestamp:timestamp()})
-    return true
-  }).then(()=>{
-    change.after.ref.parent.child('updated').set(timestamp())
-    return true
+      let roomState = snapshot.val();
+      let targetTemp = roomState.target_temp.value
+      let targetHum = roomState.target_humidity.value
+      let currentTemp = roomState.currentState.temp
+      let currentHum = roomState.currentState.hum
+      let deviceConfig={led:1,temp:false,hum:false}
+      if(currentTemp>targetTemp){
+        deviceConfig.temp=true;
+        deviceConfig.led=0
+        change.after.ref.parent.child('isTempOn').set(true);
+      }else{
+        change.after.ref.parent.child('isTempOn').set(false);
+      }
+      if(currentHum<targetHum){
+        deviceConfig.hum=true
+        deviceConfig.led=0
+        change.after.ref.parent.child('isHumOn').set(true);
+      }else{
+        change.after.ref.parent.child('isHumOn').set(false);
+      }
+      //updateDeviceConfig("2814072940603127",deviceConfig);
+      change.after.ref.parent.child('log').push({hum:currentHum,temp:currentTemp,timestamp:timestamp()})
+      return true
+    }).then(()=>{
+      change.after.ref.parent.child('updated').set(timestamp())
+      return true
   })
 }
 
