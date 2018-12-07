@@ -9,16 +9,14 @@ import {NOW} from 'Utilities/Date'
 import numeral from 'numeral'
 //COMPONENTS//
   import TextField from 'material-ui/TextField';
-  import Temp from 'components/Temperature/Temperature'
-  import Humidity from 'components/Humidity/Humidity'
   import Paper from 'material-ui/Paper';
   import SectionHeader from 'components/Headers/SectionHeader'
-  import Slider from 'components/Controls/Slider'
   import Margin from 'components/Layout/Margin'
   import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ReferenceLine} from 'recharts';
   import Dialog from 'material-ui/Dialog';
   import RaisedButton from 'material-ui/RaisedButton';
   import FlatButton from 'material-ui/FlatButton';
+  import Toggle from 'material-ui/Toggle';
 //ACTIONS//
 
 
@@ -28,16 +26,15 @@ const COMPONENT_NAME = ({
   //PROPS FROM PARENT//
 
   //REDUX//
-    room1,room2,
   //STATE
     openTargetSelect,setOpenTargetSelect,
-    updateTargetValue,setUpdateTargetValue,
+    updateTarget,setupdateTarget,
   //HANDLER
-    updateTargetSelect,
+    updateTargetSelect,compareTargetToState,handleStatusChange,
   //OTHER
     muiTheme,firebase,...props
 }) => {
-  if(!room1||!room2){
+  if(!props.room1||!props.room2){
     return(
       <div>Loading...</div>
     )
@@ -46,26 +43,26 @@ const COMPONENT_NAME = ({
     return(
       <div style={style}>
         <SectionHeader>{roomName}</SectionHeader>
-        <div style={{...styles.split,height:100,borderRight:'2px solid gray'}}>
-          <div style={{...styles.subHeader,position:'absolute',top:2,right:5,color:'red'}} onClick={()=>updateTargetSelect(roomName,'target_temp')}>
+        <div style={{...styles.split,height:100,borderRight:'2px solid gray'}} onClick={()=>updateTargetSelect(roomName,'target_temp',roomObj)}>
+          <div style={{...styles.subHeader,position:'absolute',top:2,right:5,color:'red'}}>
             {numeral(roomObj.target_temp).format('0.0')+"°F"}
           </div>
           <div style={{...styles.centeredText,lineHeight:'100px',fontSize:25,}}>
             {numeral(roomObj.temp).format('0.00')+"°F"}
           </div>
           {roomObj.isTempOn&&<div className='blinkText' style={{...styles.subHeader,position:'absolute',bottom:2,left:5}}>
-            cooling...
+            {roomObj.coolingMode?"cooling...":'heating...'}
           </div>}
         </div>
-        <div style={{...styles.split,height:100}}>
-          <div style={{...styles.subHeader,position:'absolute',top:2,right:5,color:'red'}} onClick={()=>updateTargetSelect(roomName,'target_humidity')}>
+        <div style={{...styles.split,height:100}} onClick={()=>updateTargetSelect(roomName,'target_humidity',roomObj)}>
+          <div style={{...styles.subHeader,position:'absolute',top:2,right:5,color:'red'}}>
             {numeral(roomObj.target_humidity).format('0.0')+"%"}
           </div>
           <div style={{...styles.centeredText,lineHeight:'100px',fontSize:25,}}>
             {numeral(roomObj.humidity).format('0.00')+"%"}
           </div>
           {roomObj.isHumOn&&<div className='blinkText' style={{...styles.subHeader,position:'absolute',bottom:2,left:5}}>
-            humidifying...
+            {roomObj.humidifyingMode?"humidifying...":"dehumidifying..."}
           </div>}
         </div>
         {roomObj.updated && <div style={{...styles.subHeader}}>Last updated: {roomObj.updated.format('MM/DD HH:mm')}</div>}
@@ -74,13 +71,11 @@ const COMPONENT_NAME = ({
   }
   return (
     <div>
-      <Room roomName='room1' roomObj={room1} style={{marginBottom:40}}/>
+      <Room roomName='room1' roomObj={props.room1} style={{marginBottom:40}}/>
       <div style={{width:'90%',marginLeft:'auto',marginRight:'auto',height:1,backgroundColor:'gray'}}/>
-      <Room roomName='room2' roomObj={room2} style={{marginTop:40}}/>
-
-
-      <Dialog
-        title={"Update Target "+(updateTargetValue.dataType=='target_temp'?'Temperature':'Humidity')}
+      <Room roomName='room2' roomObj={props.room2} style={{marginTop:40}}/>
+      {updateTarget.roomObj&&<Dialog
+        title={"Update Target "+(updateTarget.dataType=='target_temp'?'Temperature':'Humidity')}
         actions={[
           <FlatButton
             label="Cancel"
@@ -91,9 +86,22 @@ const COMPONENT_NAME = ({
             label="Save"
             primary={true}
             onClick={()=>{
-              var path = updateTargetValue.roomName+"/"+updateTargetValue.dataType
-              console.log(path,updateTargetValue);
-              firebase.update(path,{value:Number(updateTargetValue.value),date_modified:NOW()})
+              var path = updateTarget.roomName+"/"+updateTarget.dataType
+              firebase.update(path,{value:Number(updateTarget.value),date_modified:NOW()})
+              handleStatusChange(updateTarget.roomName)
+              // var stateKey = updateTarget.dataType=='target_temp'?'temp':'humidity'
+              // var comparisonKey = updateTarget.dataType=='target_temp'?'coolingMode':'humidifyingMode'
+              // var shouldTargetBeHigher = comparisonKey=='coolingMode'?(!updateTarget.roomObj['coolingMode']):updateTarget['humidifyingMode']
+              // var onStatusKey = updateTarget.dataType=='target_temp'?'isTempOn':'isHumOn'
+              // var updatedStatus = compareTargetToState(
+              //   updateTarget.value,
+              //   updateTarget.roomObj[stateKey],
+              //   updateTarget.roomObj[comparisonKey]
+              // )
+              // console.log(updatedStatus);
+              // var updateValue = {}
+              // updateValue[onStatusKey]=updatedStatus
+              // firebase.update(updateTarget.roomName,updateValue)
               setOpenTargetSelect(false)
             }}
           />,
@@ -105,15 +113,29 @@ const COMPONENT_NAME = ({
         titleStyle={{whiteSpace:'nowrap'}}
       >
         <TextField
-          value={updateTargetValue.value}
-          onChange={(e,value)=>setUpdateTargetValue({...updateTargetValue,value:value})}
+          value={updateTarget.value}
+          onChange={(e,value)=>setupdateTarget({...updateTarget,value:value})}
           hintText="target value"
           type='number'
           fullWidth
           inputStyle={{textAlign:'center'}}
           autoFocus
         />
-      </Dialog>
+        <Toggle
+          label={updateTarget.dataType=='target_temp'?props[updateTarget.roomName].coolingMode?"Cooling Mode":'Heating Mode':props[updateTarget.roomName].humidifyingMode?"Humidifying Mode":'Dehumidifying Mode'}
+          toggled={updateTarget.dataType=='target_temp'?props[updateTarget.roomName].coolingMode:props[updateTarget.roomName].humidifyingMode}
+          onToggle={(e,value)=>{
+            var updateValue = {}
+            if(updateTarget.dataType=='target_temp'){
+              updateValue.coolingMode=value
+            }else{
+              updateValue.humidifyingMode=value
+            }
+            firebase.update(updateTarget.roomName,updateValue)
+            handleStatusChange(updateTarget.roomName)
+          }}
+        />
+      </Dialog>}
     </div>
   )
 }
@@ -132,20 +154,24 @@ export default compose(
   withFirebase,
   connect(mapStateToProps,matchDispatchToProps),
   firebaseConnect([
-    { path: '/room1/log', queryParams: [ 'limitToFirst=300' ] },
+    //{ path: '/room1/log', queryParams: [ 'limitToFirst=300' ] },
     'room1/currentState',
     'room1/isHumOn',
     'room1/isTempOn',
     'room1/target_humidity',
     'room1/target_temp',
     'room1/updated',
-    { path: '/room2/log', queryParams: [ 'limitToFirst=300' ] },
+    'room1/coolingMode',
+    'room1/humidifyingMode',
+    //{ path: '/room2/log', queryParams: [ 'limitToFirst=300' ] },
     'room2/currentState',
     'room2/isHumOn',
     'room2/isTempOn',
     'room2/target_humidity',
     'room2/target_temp',
     'room2/updated',
+    'room2/coolingMode',
+    'room2/humidifyingMode',
   ]),
   withProps(props=>({
     room1:{
@@ -157,6 +183,8 @@ export default compose(
       isHumOn:props.room1 && props.room1.isHumOn,
       log:props.room1 && props.room1.log,
       updated:props.room1 && moment(props.room1.updated),
+      coolingMode:props.room1 && props.room1.coolingMode?true:false,
+      humidifyingMode:props.room1 && props.room1.humidifyingMode?true:false
     },
     room2:{
       target_temp:(props.room2&&props.room2.target_temp)?props.room2.target_temp.value:0,
@@ -167,15 +195,39 @@ export default compose(
       isHumOn:props.room2 && props.room2.isHumOn,
       log:props.room2 && props.room2.log,
       updated:props.room2 && moment(props.room2.updated),
+      coolingMode:props.room2 && props.room2.coolingMode?true:false,
+      humidifyingMode:props.room2 && props.room2.humidifyingMode?true:false
     }
   })),
   muiThemeable(),
   withState('openTargetSelect','setOpenTargetSelect',false),
-  withState('updateTargetValue','setUpdateTargetValue',{}),
+  withState('updateTarget','setupdateTarget',{}),
   withHandlers({
-    updateTargetSelect:props=>(roomName,dataType)=>{
+    updateTargetSelect:props=>(roomName,dataType,roomObj)=>{
       props.setOpenTargetSelect(true),
-      props.setUpdateTargetValue({roomName:roomName,dataType:dataType,value:props[roomName][dataType]})
+      props.setupdateTarget({roomName:roomName,dataType:dataType,value:props[roomName][dataType],roomObj:roomObj})
+    },
+    compareTargetToState:props=>(target,currentState,shouldTargetBeHigher)=>{
+      //console.log(target,currentState,shouldTargetBeHigher);
+      if(shouldTargetBeHigher){
+        return Number(target)>Number(currentState)
+      }else{
+        return Number(target)<Number(currentState)
+      }
+    }
+  }),
+  withHandlers({
+    handleStatusChange:props=>(roomName)=>{
+      var roomObj = props[roomName]
+      if(props.updateTarget.roomName==roomName){
+        roomObj[props.updateTarget.dataType]=props.updateTarget.value
+      }
+      var isHumOn = props.compareTargetToState(roomObj.target_humidity,roomObj.humidity,roomObj.humidifyingMode)
+      //console.log(isHumOn);
+      var isTempOn = props.compareTargetToState(roomObj.target_temp,roomObj.temp,!roomObj.coolingMode)
+      //console.log(isTempOn);
+      props.firebase.update(roomName,{isHumOn:isHumOn})
+      props.firebase.update(roomName,{isTempOn:isTempOn})
     }
   })
 )(COMPONENT_NAME)

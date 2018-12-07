@@ -66,6 +66,15 @@ exports.targetTempWatcher = functions.database.ref('/room1/target_temp')
     checkStatus(change)
   });
 
+exports.targetHumidityWatcher2 = functions.database.ref('/room2/target_humidity')
+  .onWrite((change, context) => {
+    checkStatus(change)
+  });
+exports.targetTempWatcher2 = functions.database.ref('/room2/target_temp')
+  .onWrite((change, context) => {
+    checkStatus(change)
+  });
+
 function checkStatus(change){
   if (!change.after.exists()) {
     return null;
@@ -76,21 +85,10 @@ function checkStatus(change){
       let targetHum = roomState.target_humidity.value
       let currentTemp = roomState.currentState.temp
       let currentHum = roomState.currentState.hum
-      let deviceConfig={led:1,temp:false,hum:false}
-      if(currentTemp>targetTemp){
-        deviceConfig.temp=true;
-        deviceConfig.led=0
-        change.after.ref.parent.child('isTempOn').set(true);
-      }else{
-        change.after.ref.parent.child('isTempOn').set(false);
-      }
-      if(currentHum<targetHum){
-        deviceConfig.hum=true
-        deviceConfig.led=0
-        change.after.ref.parent.child('isHumOn').set(true);
-      }else{
-        change.after.ref.parent.child('isHumOn').set(false);
-      }
+      let coolingMode = roomState.coolingMode
+      let humidifyingMode = roomState.humidifyingMode
+      change.after.ref.parent.child('isTempOn').set(handleComparison(targetTemp,currentTemp,!coolingMode));
+      change.after.ref.parent.child('isHumOn').set(handleComparison(targetTemp,currentTemp,humidifyingMode));
       //updateDeviceConfig("2814072940603127",deviceConfig);
       change.after.ref.parent.child('log').push({hum:currentHum,temp:currentTemp,timestamp:timestamp()})
       return true
@@ -98,6 +96,13 @@ function checkStatus(change){
       change.after.ref.parent.child('updated').set(timestamp())
       return true
   })
+}
+function handleComparison(target,current,shouldTargetBeHigher){
+  if(shouldTargetBeHigher){
+    return Number(target)>Number(current)
+  }else{
+    return Number(target)<Number(current)
+  }
 }
 
 function updateDeviceConfig(deviceId,config){
