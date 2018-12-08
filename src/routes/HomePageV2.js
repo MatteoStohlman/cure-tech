@@ -39,11 +39,11 @@ const COMPONENT_NAME = ({
       <div>Loading...</div>
     )
   }
-  const Room = ({roomName,roomObj,style}) =>{
+  const Room = ({roomName,roomObj,style, disabled}) =>{
     return(
-      <div style={{height:((window.innerHeight-25)/3),...style}}>
+      <div style={{height:'33%',...style}}>
         <SectionHeader>{roomName}</SectionHeader>
-        <div style={{...styles.split,height:100,borderRight:'2px solid gray'}} onClick={()=>updateTargetSelect(roomName,'target_temp',roomObj)}>
+        <div style={{...styles.split,height:100,borderRight:'2px solid gray'}} onClick={()=>!disabled&&updateTargetSelect(roomName,'target_temp',roomObj)}>
           <div style={{...styles.subHeader,position:'absolute',top:2,right:15,color:'red'}}>
             {numeral(roomObj.target_temp).format('0.0')+"°F"}
           </div>
@@ -54,7 +54,7 @@ const COMPONENT_NAME = ({
             {roomObj.coolingMode?"cooling...":'heating...'}
           </div>}
         </div>
-        <div style={{...styles.split,height:100}} onClick={()=>updateTargetSelect(roomName,'target_humidity',roomObj)}>
+        <div style={{...styles.split,height:100}} onClick={()=>!disabled&&updateTargetSelect(roomName,'target_humidity',roomObj)}>
           <div style={{...styles.subHeader,position:'absolute',top:2,right:15,color:'red'}}>
             {numeral(roomObj.target_humidity).format('0.0')+"%"}
           </div>
@@ -70,10 +70,15 @@ const COMPONENT_NAME = ({
     )
   }
   return (
-    <div>
+    <div style={{height:'100%'}}>
       <Room roomName='room1' roomObj={props.room1} style={{paddingBottom:20,paddingTop:10,backgroundColor:'#ffffba'}}/>
       <Room roomName='room2' roomObj={props.room2} style={{paddingTop:10,paddingBottom:20,backgroundColor:'#ffdfba'}}/>
-      <Room roomName='controller' roomObj={props.controller} style={{paddingTop:10,paddingBottom:20,backgroundColor:'#bae1ff'}}/>
+      <Room
+        roomName='controller'
+        roomObj={props.controller}
+        style={{paddingTop:10,paddingBottom:20,backgroundColor:'#bae1ff'}}
+        disabled
+      />
       {updateTarget.roomObj&&<Dialog
         title={"Update Target "+(updateTarget.dataType=='target_temp'?'Temperature':'Humidity')}
         actions={[
