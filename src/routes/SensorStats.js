@@ -123,7 +123,7 @@ export default compose(
   withState('lastRunForMins','setLastRunForMins',false),
   lifecycle({
     componentDidUpdate(){
-      if((moment().format('mm')%14==0) && (this.props.lastRunForMins != moment().format('mm'))){
+      if((moment().format('mm')%5==0) && (this.props.lastRunForMins != moment().format('mm'))){
         var room1Hum = this.props.room1.humidity
         var room2Hum = this.props.room2.humidity
         var controllerHum = this.props.controller.humidity
@@ -132,9 +132,12 @@ export default compose(
           this.props.firebase.push(
             'humidityStats',
             {
-              'one_two':Math.abs(room1Hum-room2Hum),
-              'two_controller':Math.abs(room2Hum-controllerHum),
-              'one_controller':Math.abs(room1Hum-controllerHum),
+              'one_two':room1Hum-room2Hum,
+              'two_controller':room2Hum-controllerHum,
+              'one_controller':room1Hum-controllerHum,
+              room1Hum:room1Hum,
+              room2Hum:room2Hum,
+              controllerHum:controllerHum,
               'timestamp':NOW()
             })
         }
