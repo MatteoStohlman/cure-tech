@@ -88,7 +88,7 @@ function checkStatus(change){
       let coolingMode = roomState.coolingMode
       let humidifyingMode = roomState.humidifyingMode
       change.after.ref.parent.child('isTempOn').set(handleComparison(targetTemp,currentTemp,!coolingMode));
-      change.after.ref.parent.child('isHumOn').set(handleComparison(targetTemp,currentTemp,humidifyingMode));
+      change.after.ref.parent.child('isHumOn').set(handleComparison(targetHum,currentHum,humidifyingMode));
       //updateDeviceConfig("2814072940603127",deviceConfig);
       change.after.ref.parent.child('log').push({hum:currentHum,temp:currentTemp,timestamp:timestamp()})
       return true

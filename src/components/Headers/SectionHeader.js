@@ -13,7 +13,6 @@ import muiThemeable from 'material-ui/styles/muiThemeable';
 const COMPONENT_NAME = ({style,center,muiTheme,...props}) => {
   const styles = {
     fontSize:20,
-    marginTop:5,
     marginLeft:10,
     fontWeight:'bold',
     letterSpacing:'1px',

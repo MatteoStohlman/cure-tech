@@ -14,7 +14,7 @@ export default class HeaderComponent extends React.Component {
 
     return (
       <div>
-        <Toolbar style={{height:25}}>
+        <Toolbar style={{height:25,backgroundColor:'#00332b',color:'white'}}>
           <ToolbarGroup>
             <div style={{position:'fixed',left:0,top:0,fontSize:20,lineHeight:'25px',letterSpacing:'2px',width:'100vw',textAlign:'center',fontVariant:'small-caps'}}>CureTech</div>
           </ToolbarGroup>

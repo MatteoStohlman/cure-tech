@@ -44,7 +44,7 @@ const COMPONENT_NAME = ({
       <div style={style}>
         <SectionHeader>{roomName}</SectionHeader>
         <div style={{...styles.split,height:100,borderRight:'2px solid gray'}} onClick={()=>updateTargetSelect(roomName,'target_temp',roomObj)}>
-          <div style={{...styles.subHeader,position:'absolute',top:2,right:5,color:'red'}}>
+          <div style={{...styles.subHeader,position:'absolute',top:2,right:15,color:'red'}}>
             {numeral(roomObj.target_temp).format('0.0')+"°F"}
           </div>
           <div style={{...styles.centeredText,lineHeight:'100px',fontSize:25,}}>
@@ -55,7 +55,7 @@ const COMPONENT_NAME = ({
           </div>}
         </div>
         <div style={{...styles.split,height:100}} onClick={()=>updateTargetSelect(roomName,'target_humidity',roomObj)}>
-          <div style={{...styles.subHeader,position:'absolute',top:2,right:5,color:'red'}}>
+          <div style={{...styles.subHeader,position:'absolute',top:2,right:15,color:'red'}}>
             {numeral(roomObj.target_humidity).format('0.0')+"%"}
           </div>
           <div style={{...styles.centeredText,lineHeight:'100px',fontSize:25,}}>
@@ -71,9 +71,9 @@ const COMPONENT_NAME = ({
   }
   return (
     <div>
-      <Room roomName='room1' roomObj={props.room1} style={{marginBottom:40}}/>
-      <div style={{width:'90%',marginLeft:'auto',marginRight:'auto',height:1,backgroundColor:'gray'}}/>
-      <Room roomName='room2' roomObj={props.room2} style={{marginTop:40}}/>
+      <Room roomName='room1' roomObj={props.room1} style={{paddingBottom:20,paddingTop:10,backgroundColor:'#ffffba'}}/>
+      <Room roomName='room2' roomObj={props.room2} style={{paddingTop:10,paddingBottom:20,backgroundColor:'#ffdfba'}}/>
+      Garage Temp: {numeral(props.controller.temp).format('0.0')+"°F"}
       {updateTarget.roomObj&&<Dialog
         title={"Update Target "+(updateTarget.dataType=='target_temp'?'Temperature':'Humidity')}
         actions={[
@@ -143,6 +143,7 @@ const COMPONENT_NAME = ({
 const mapStateToProps = state => ({
   room1:state.firebase.data.room1,
   room2:state.firebase.data.room2,
+  controller:state.firebase.data.controller,
 })
 
 function matchDispatchToProps(dispatch){
@@ -172,33 +173,40 @@ export default compose(
     'room2/updated',
     'room2/coolingMode',
     'room2/humidifyingMode',
+    'controller/currentState',
   ]),
-  withProps(props=>({
-    room1:{
-      target_temp:(props.room1&&props.room1.target_temp)?props.room1.target_temp.value:0,
-      target_humidity:(props.room1&&props.room1.target_humidity)?props.room1.target_humidity.value:0,
-      temp:(props.room1&&props.room1.currentState)?props.room1.currentState.temp:0,
-      humidity:(props.room1&&props.room1.currentState)?props.room1.currentState.hum:0,
-      isTempOn:props.room1 && props.room1.isTempOn,
-      isHumOn:props.room1 && props.room1.isHumOn,
-      log:props.room1 && props.room1.log,
-      updated:props.room1 && moment(props.room1.updated),
-      coolingMode:props.room1 && props.room1.coolingMode?true:false,
-      humidifyingMode:props.room1 && props.room1.humidifyingMode?true:false
-    },
-    room2:{
-      target_temp:(props.room2&&props.room2.target_temp)?props.room2.target_temp.value:0,
-      target_humidity:(props.room2&&props.room2.target_humidity)?props.room2.target_humidity.value:0,
-      temp:(props.room2&&props.room2.currentState)?props.room2.currentState.temp:0,
-      humidity:(props.room2&&props.room2.currentState)?props.room2.currentState.hum:0,
-      isTempOn:props.room2 && props.room2.isTempOn,
-      isHumOn:props.room2 && props.room2.isHumOn,
-      log:props.room2 && props.room2.log,
-      updated:props.room2 && moment(props.room2.updated),
-      coolingMode:props.room2 && props.room2.coolingMode?true:false,
-      humidifyingMode:props.room2 && props.room2.humidifyingMode?true:false
-    }
-  })),
+  withProps(props=>{
+    console.log(props);
+    return({
+      room1:{
+        target_temp:(props.room1&&props.room1.target_temp)?props.room1.target_temp.value:0,
+        target_humidity:(props.room1&&props.room1.target_humidity)?props.room1.target_humidity.value:0,
+        temp:(props.room1&&props.room1.currentState)?props.room1.currentState.temp:0,
+        humidity:(props.room1&&props.room1.currentState)?props.room1.currentState.hum:0,
+        isTempOn:props.room1 && props.room1.isTempOn,
+        isHumOn:props.room1 && props.room1.isHumOn,
+        log:props.room1 && props.room1.log,
+        updated:props.room1 && moment(props.room1.updated),
+        coolingMode:props.room1 && props.room1.coolingMode?true:false,
+        humidifyingMode:props.room1 && props.room1.humidifyingMode?true:false
+      },
+      room2:{
+        target_temp:(props.room2&&props.room2.target_temp)?props.room2.target_temp.value:0,
+        target_humidity:(props.room2&&props.room2.target_humidity)?props.room2.target_humidity.value:0,
+        temp:(props.room2&&props.room2.currentState)?props.room2.currentState.temp:0,
+        humidity:(props.room2&&props.room2.currentState)?props.room2.currentState.hum:0,
+        isTempOn:props.room2 && props.room2.isTempOn,
+        isHumOn:props.room2 && props.room2.isHumOn,
+        log:props.room2 && props.room2.log,
+        updated:props.room2 && moment(props.room2.updated),
+        coolingMode:props.room2 && props.room2.coolingMode?true:false,
+        humidifyingMode:props.room2 && props.room2.humidifyingMode?true:false
+      },
+      controller:{
+        temp:(props.controller&&props.controller.currentState)&&props.controller.currentState.temp,
+      }
+    })
+  }),
   muiThemeable(),
   withState('openTargetSelect','setOpenTargetSelect',false),
   withState('updateTarget','setupdateTarget',{}),
