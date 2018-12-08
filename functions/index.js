@@ -57,23 +57,23 @@ exports.room2StateWatcher = functions.database.ref('/room2/currentState')
       checkStatus(change)
     });
 
-exports.targetHumidityWatcher = functions.database.ref('/room1/target_humidity')
-  .onWrite((change, context) => {
-    checkStatus(change)
-  });
-exports.targetTempWatcher = functions.database.ref('/room1/target_temp')
-  .onWrite((change, context) => {
-    checkStatus(change)
-  });
-
-exports.targetHumidityWatcher2 = functions.database.ref('/room2/target_humidity')
-  .onWrite((change, context) => {
-    checkStatus(change)
-  });
-exports.targetTempWatcher2 = functions.database.ref('/room2/target_temp')
-  .onWrite((change, context) => {
-    checkStatus(change)
-  });
+// exports.targetHumidityWatcher = functions.database.ref('/room1/target_humidity')
+//   .onWrite((change, context) => {
+//     checkStatus(change)
+//   });
+// exports.targetTempWatcher = functions.database.ref('/room1/target_temp')
+//   .onWrite((change, context) => {
+//     checkStatus(change)
+//   });
+//
+// exports.targetHumidityWatcher2 = functions.database.ref('/room2/target_humidity')
+//   .onWrite((change, context) => {
+//     checkStatus(change)
+//   });
+// exports.targetTempWatcher2 = functions.database.ref('/room2/target_temp')
+//   .onWrite((change, context) => {
+//     checkStatus(change)
+//   });
 
 function checkStatus(change){
   if (!change.after.exists()) {

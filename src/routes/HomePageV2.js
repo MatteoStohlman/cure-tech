@@ -241,6 +241,7 @@ export default compose(
       //console.log(isTempOn);
       props.firebase.update(roomName,{isHumOn:isHumOn})
       props.firebase.update(roomName,{isTempOn:isTempOn})
+      props.firebase.update(roomName,{heatPadOn:(isTempOn&&roomObj.coolingMode?'1':false)})
     }
   })
 )(COMPONENT_NAME)
