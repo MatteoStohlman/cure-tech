@@ -41,7 +41,7 @@ const COMPONENT_NAME = ({
   }
   const Room = ({roomName,roomObj,style}) =>{
     return(
-      <div style={style}>
+      <div style={{height:((window.innerHeight-25)/3),...style}}>
         <SectionHeader>{roomName}</SectionHeader>
         <div style={{...styles.split,height:100,borderRight:'2px solid gray'}} onClick={()=>updateTargetSelect(roomName,'target_temp',roomObj)}>
           <div style={{...styles.subHeader,position:'absolute',top:2,right:15,color:'red'}}>
@@ -73,7 +73,7 @@ const COMPONENT_NAME = ({
     <div>
       <Room roomName='room1' roomObj={props.room1} style={{paddingBottom:20,paddingTop:10,backgroundColor:'#ffffba'}}/>
       <Room roomName='room2' roomObj={props.room2} style={{paddingTop:10,paddingBottom:20,backgroundColor:'#ffdfba'}}/>
-      Garage Temp: {numeral(props.controller.temp).format('0.0')+"°F"}
+      <Room roomName='controller' roomObj={props.controller} style={{paddingTop:10,paddingBottom:20,backgroundColor:'#bae1ff'}}/>
       {updateTarget.roomObj&&<Dialog
         title={"Update Target "+(updateTarget.dataType=='target_temp'?'Temperature':'Humidity')}
         actions={[
