@@ -178,6 +178,7 @@ export default compose(
     'room2/updated',
     'room2/coolingMode',
     'room2/humidifyingMode',
+
     'controller/currentState',
   ]),
   withProps(props=>{
@@ -209,6 +210,8 @@ export default compose(
       },
       controller:{
         temp:(props.controller&&props.controller.currentState)&&props.controller.currentState.temp,
+        humidity:(props.controller&&props.controller.currentState)&&props.controller.currentState.hum,
+        probe:(props.controller&&props.controller.currentState)&&props.controller.currentState.probe,
       }
     })
   }),
