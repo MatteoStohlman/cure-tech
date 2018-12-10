@@ -39,13 +39,43 @@ const COMPONENT_NAME = ({
       <div>Loading...</div>
     )
   }
-
-  return (
+  console.log(props.humLog);
+  return(
     <div>
-      Humidity:<br/>
-      Room1 - Room2: {props.room1.humidity-props.room2.humidity}<br/>
-      Room2 - Controller: {props.room2.humidity-props.controller.humidity}<br/>
-      Room1 - Controller: {props.room1.humidity-props.controller.humidity}<br/>
+      <LineChart
+        width={window.innerWidth}
+        height={200}
+        data={props.stats.humLog}
+      >
+        <Line type="monotone" dataKey='room1' stroke="red" dot={false}/>
+        <Line type="monotone" dataKey='room2' stroke="black" dot={false}/>
+        <Line type="monotone" dataKey='controller' stroke="yellow" dot={false}/>
+        <Line type="monotone" dataKey='average' stroke="blue" strokeDasharray="5 5" dot={false}/>
+        <CartesianGrid stroke="#ccc"/>
+        <XAxis dataKey="timestamp" tickFormatter={(value)=>moment(value).format('MM/DD H:mm')}/>
+        <YAxis domain={['dataMin', 'dataMax']}/>
+        <Tooltip/>
+      </LineChart>
+      Cont_R1:
+      {props.stats.cont_r1}
+      <br/>
+      Cont_R2:
+      {props.stats.cont_r2}
+      <LineChart
+        width={window.innerWidth}
+        height={200}
+        data={props.stats.adjustedLogs}
+      >
+        <Line type="monotone" dataKey='room1' stroke="red" dot={false}/>
+        <Line type="monotone" dataKey='room2' stroke="black" dot={false}/>
+        <Line type="monotone" dataKey='controller' stroke="yellow" dot={false}/>
+        <Line type="monotone" dataKey='average' stroke="blue" strokeDasharray="5 5" dot={false}/>
+        <CartesianGrid stroke="#ccc"/>
+        <XAxis dataKey="timestamp" tickFormatter={(value)=>moment(value).format('MM/DD H:mm')}/>
+        <YAxis domain={['dataMin', 'dataMax']}/>
+        <Tooltip/>
+      </LineChart>
+      
     </div>
   )
 }
@@ -65,28 +95,88 @@ export default compose(
   withFirebase,
   connect(mapStateToProps,matchDispatchToProps),
   firebaseConnect([
-    //{ path: '/room1/log', queryParams: [ 'limitToFirst=300' ] },
-    'room1/currentState',
-    'room1/isHumOn',
-    'room1/isTempOn',
-    'room1/target_humidity',
-    'room1/target_temp',
-    'room1/updated',
-    'room1/coolingMode',
-    'room1/humidifyingMode',
-    //{ path: '/room2/log', queryParams: [ 'limitToFirst=300' ] },
-    'room2/currentState',
-    'room2/isHumOn',
-    'room2/isTempOn',
-    'room2/target_humidity',
-    'room2/target_temp',
-    'room2/updated',
-    'room2/coolingMode',
-    'room2/humidifyingMode',
-
+    { path: '/room1/log', queryParams: [ 'limitToLast=10000' ] },
+    { path: '/room2/log', queryParams: [ 'limitToLast=10000' ] },
+    'room1/config/sensors/dht21',
+    'room2/config/sensors/dht21',
     'controller/currentState',
+    { path: '/controller/log', queryParams: [ 'limitToLast=1000' ] },
   ]),
   withProps(props=>{
+    var room1Log = props.room1&&props.room1.log
+    var room2Log = props.room2&&props.room2.log
+    var controllerLog = props.controller&&props.controller.log
+    if(room1Log&&room2Log&&controllerLog){
+      var logAgg = {}
+      Object.keys(room1Log).map((logId)=>{
+        var log = room1Log[logId]
+        var timehash = moment(log.timestamp).format('DDHHmm')
+        if(logAgg[timehash]&&logAgg[timehash]!=undefined){
+          if(logAgg[timehash]&&logAgg[timehash].room1&&logAgg[timehash].room1!=undefined){
+            logAgg[timehash].room1=log.hum
+          }else{
+            logAgg[timehash].room1=log.hum
+          }
+        }else{
+          logAgg[timehash]={}
+          logAgg[timehash].room1=log.hum
+        }
+      })
+      Object.keys(room2Log).map((logId)=>{
+        var log = room2Log[logId]
+        var timehash = moment(log.timestamp).format('DDHHmm')
+        if(logAgg[timehash]&&logAgg[timehash]!=undefined){
+          if(logAgg[timehash]&&logAgg[timehash].room2&&logAgg[timehash].room2!=undefined){
+            logAgg[timehash].room2=log.hum
+          }else{
+            logAgg[timehash].room2=log.hum
+          }
+        }else{
+          logAgg[timehash]={}
+          logAgg[timehash].room2=log.hum
+        }
+      })
+      Object.keys(controllerLog).map((logId)=>{
+        var log = controllerLog[logId]
+        var timehash = moment(log.timestamp).format('DDHHmm')
+        if(logAgg[timehash]&&logAgg[timehash]!=undefined){
+          if(logAgg[timehash]&&logAgg[timehash].controller&&logAgg[timehash].controller!=undefined){
+            logAgg[timehash].controller=log.hum
+          }else{
+            logAgg[timehash].controller=log.hum
+          }
+        }else{
+          logAgg[timehash]={}
+          logAgg[timehash].controller=log.hum
+        }
+      })
+    }
+    if(logAgg){
+      var filteredLogAgg = []
+      Object.keys(logAgg).map((logAggKey)=>{
+        if(logAgg[logAggKey].room1&&logAgg[logAggKey].room2&&logAgg[logAggKey].controller){
+          var r1 =logAgg[logAggKey].room1
+          var r2 =logAgg[logAggKey].room2
+          var cont=logAgg[logAggKey].controller
+          var cont_r1 = cont-r1
+          var cont_r2 = cont-r2
+          filteredLogAgg.push({...logAgg[logAggKey],timestamp:logAggKey,average:(r1+r2+cont)/3,cont_r1,cont_r2})
+        }
+      })
+    }
+    if(filteredLogAgg){
+      var cont_r1 = 0;
+      var cont_r2 = 0;
+      filteredLogAgg.map((log)=>{
+        cont_r1+=log.cont_r1
+        cont_r2+=log.cont_r2
+      })
+      var DEVIATION_cont_r1=cont_r1/filteredLogAgg.length
+      var DEVIATION_cont_r2=cont_r2/filteredLogAgg.length
+    }
+    if(filteredLogAgg&&DEVIATION_cont_r1&&DEVIATION_cont_r2){
+      var adjustedLogs = filteredLogAgg.map((log)=>({...log,room1:log.room1+DEVIATION_cont_r1,room2:log.room2+DEVIATION_cont_r2}))
+    }
     return({
       room1:{
         target_temp:(props.room1&&props.room1.target_temp)?props.room1.target_temp.value:0,
@@ -116,6 +206,12 @@ export default compose(
         temp:(props.controller&&props.controller.currentState)&&props.controller.currentState.temp,
         humidity:(props.controller&&props.controller.currentState)&&props.controller.currentState.hum,
         probe:(props.controller&&props.controller.currentState)&&props.controller.currentState.probe,
+      },
+      stats:{
+        humLog:filteredLogAgg,
+        adjustedLogs:adjustedLogs,
+        cont_r1:DEVIATION_cont_r1,
+        cont_r2:DEVIATION_cont_r2,
       }
     })
   }),

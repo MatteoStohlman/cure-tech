@@ -45,7 +45,7 @@ const COMPONENT_NAME = ({
         <SectionHeader>{roomName}</SectionHeader>
         <div style={{...styles.split,height:100,borderRight:'2px solid gray'}} onClick={()=>!disabled&&updateTargetSelect(roomName,'target_temp',roomObj)}>
           <div style={{...styles.subHeader,position:'absolute',top:2,right:15,color:'red'}}>
-            {numeral(roomObj.target_temp).format('0.0')+"°F"}
+            {roomObj.coolingMode?'cooling to ':'heating to: '}{numeral(roomObj.target_temp).format('0.0')+"°F"}
           </div>
           <div style={{...styles.centeredText,lineHeight:'100px',fontSize:25,}}>
             {numeral(roomObj.temp).format('0.00')+"°F"}
@@ -56,7 +56,7 @@ const COMPONENT_NAME = ({
         </div>
         <div style={{...styles.split,height:100}} onClick={()=>!disabled&&updateTargetSelect(roomName,'target_humidity',roomObj)}>
           <div style={{...styles.subHeader,position:'absolute',top:2,right:15,color:'red'}}>
-            {numeral(roomObj.target_humidity).format('0.0')+"%"}
+            {roomObj.humidifyingMode?'humidifying to: ':'dehumidifying to: '}{numeral(roomObj.target_humidity).format('0.0')+"%"}
           </div>
           <div style={{...styles.centeredText,lineHeight:'100px',fontSize:25,}}>
             {numeral(roomObj.humidity).format('0.00')+"%"}
@@ -74,7 +74,7 @@ const COMPONENT_NAME = ({
       <Room roomName='room1' roomObj={props.room1} style={{paddingBottom:20,paddingTop:10,backgroundColor:'#ffffba'}}/>
       <Room roomName='room2' roomObj={props.room2} style={{paddingTop:10,paddingBottom:20,backgroundColor:'#ffdfba'}}/>
       <Room
-        roomName='controller'
+        roomName='Garage'
         roomObj={props.controller}
         style={{paddingTop:10,paddingBottom:20,backgroundColor:'#bae1ff'}}
         disabled
@@ -138,6 +138,7 @@ const COMPONENT_NAME = ({
             }
             firebase.update(updateTarget.roomName,updateValue)
             handleStatusChange(updateTarget.roomName)
+            setOpenTargetSelect(false);
           }}
         />
       </Dialog>}
@@ -182,7 +183,6 @@ export default compose(
     'controller/currentState',
   ]),
   withProps(props=>{
-    console.log(props);
     return({
       room1:{
         target_temp:(props.room1&&props.room1.target_temp)?props.room1.target_temp.value:0,
@@ -234,6 +234,7 @@ export default compose(
   }),
   withHandlers({
     handleStatusChange:props=>(roomName)=>{
+      return;
       var roomObj = props[roomName]
       if(props.updateTarget.roomName==roomName){
         roomObj[props.updateTarget.dataType]=props.updateTarget.value
