@@ -47,15 +47,34 @@ admin.initializeApp();
 //     return 'Not Updating at this time'
 //   }
 // });
+exports.connect = functions.https.onRequest((request, response) => {
+  if(request.query.value && request.query.value!==''){
+    try{
+      admin.database().ref(request.query.path).set(request.query.value)
+    }catch(e){
+      response.send({status:false,message:e})
+    }
+    response.send({status:true})
+  }else{//request.method=='GET'
+    try{
+      return admin.database().ref(request.query.path).once('value').then(snapshot=>{
+        response.send({status:true,payload:snapshot})
+        return true;
+      })
+    }catch(e){
+      response.send({status:false,message:e})
+    }
 
-// exports.room1StateWatcher = functions.database.ref('/room1/currentState')
-//     .onWrite((change, context) => {
-//       checkStatus(change)
-//     });
-// exports.room2StateWatcher = functions.database.ref('/room2/currentState')
-//     .onWrite((change, context) => {
-//       checkStatus(change)
-//     });
+  }
+});
+exports.room1StateWatcher = functions.database.ref('/room1/currentState')
+    .onWrite((change, context) => {
+      checkStatus(change)
+    });
+exports.room2StateWatcher = functions.database.ref('/room2/currentState')
+    .onWrite((change, context) => {
+      checkStatus(change)
+    });
 exports.controllerStateWatcher = functions.database.ref('/controller/currentState')
     .onWrite((change, context) => {
       if (!change.after.exists()) {
@@ -71,7 +90,7 @@ exports.controllerStateWatcher = functions.database.ref('/controller/currentStat
           let roomState = snapshot.val();
           let currentTemp = roomState.currentState.temp
           let currentHum = roomState.currentState.hum
-          change.after.ref.parent.child('log').push({hum:currentHum,temp:currentTemp,timestamp:timestamp()})
+          change.after.ref.parent.parent.child('log').child('controller').push({hum:currentHum,temp:currentTemp,timestamp:timestamp()})
           return true
         }).then(()=>{
           change.after.ref.parent.child('updated').set(timestamp())
@@ -143,25 +162,36 @@ function checkStatus(change){
       let currentHum = roomState.currentState.hum
       let coolingMode = roomState.coolingMode
       let humidifyingMode = roomState.humidifyingMode
-      console.log(targetTemp,currentTemp,!coolingMode);
-      change.after.ref.parent.child('isTempOn').set(handleComparison(targetTemp,currentTemp,!coolingMode));
-      console.log(targetHum,currentHum,humidifyingMode);
-      change.after.ref.parent.child('isHumOn').set(handleComparison(targetHum,currentHum,humidifyingMode));
-      //updateDeviceConfig("2814072940603127",deviceConfig);
-      change.after.ref.parent.child('log').push({hum:currentHum,temp:currentTemp,timestamp:timestamp()})
-      return true
+      let probeTemp = roomState.currentState.probe;
+      let roomName=roomState.roomName;
+      let updated = roomState.updated || moment();
+      if(probeTemp<=35.5 && coolingMode){
+        change.after.ref.parent.child('isTempOn').set(false);
+        return true;
+      }else{
+        //console.log(targetTemp,currentTemp,!coolingMode);
+        change.after.ref.parent.child('isTempOn').set(handleComparison(targetTemp,currentTemp,!coolingMode));
+        //console.log(targetHum,currentHum,humidifyingMode);
+        change.after.ref.parent.child('isHumOn').set(handleComparison(targetHum,currentHum,humidifyingMode));
+        //updateDeviceConfig("2814072940603127",deviceConfig);
+        //console.log(updated,timestamp(),moment(updated).add(1,'hours').isBefore(moment(timestamp())));
+        if(moment(updated).add(1,'hours').isBefore(moment(timestamp()))){
+          change.after.ref.parent.parent.child('log').child(roomName).push({hum:currentHum,temp:currentTemp,timestamp:timestamp()})
+        }
+        return true
+      }
     }).then(()=>{
-      change.after.ref.parent.child('updated').set(timestamp())
+        change.after.ref.parent.child('updated').set(timestamp())
       return true
   })
 }
 function handleComparison(target,current,shouldTargetBeHigher){
-  console.log(target,current,shouldTargetBeHigher);
+  //console.log(target,current,shouldTargetBeHigher);
   if(shouldTargetBeHigher){
-    console.log(Number(target)>Number(current));
+    //console.log(Number(target)>Number(current));
     return Number(target)>Number(current)
   }else{
-    console.log(Number(target)<Number(current));
+    //console.log(Number(target)<Number(current));
     return Number(target)<Number(current)
   }
 }

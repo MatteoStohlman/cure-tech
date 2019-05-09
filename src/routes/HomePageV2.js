@@ -28,7 +28,8 @@ const COMPONENT_NAME = ({
   //REDUX//
   //STATE
     openTargetSelect,setOpenTargetSelect,
-    updateTarget,setupdateTarget,
+    updateTarget,setUpdateTarget,updateUpdateTarget,
+    error,setError,
   //HANDLER
     updateTargetSelect,compareTargetToState,handleStatusChange,
   //OTHER
@@ -39,13 +40,14 @@ const COMPONENT_NAME = ({
       <div>Loading...</div>
     )
   }
-  const Room = ({roomName,roomObj,style, disabled}) =>{
+  const Room = ({roomName,roomObj,style, disabled=false}) =>{
     return(
       <div style={{height:'33%',...style}}>
         <SectionHeader>{roomName}</SectionHeader>
         <div style={{...styles.split,height:100,borderRight:'2px solid gray'}} onClick={()=>!disabled&&updateTargetSelect(roomName,'target_temp',roomObj)}>
           <div style={{...styles.subHeader,position:'absolute',top:2,right:15,color:'red'}}>
-            {roomObj.coolingMode?'cooling to ':'heating to: '}{numeral(roomObj.target_temp).format('0.0')+"°F"}
+            {!disabled&&(roomObj.coolingMode?'cooling to ':'heating to: ')}
+            {!disabled&&numeral(roomObj.target_temp).format('0.0')+"°F"}
           </div>
           <div style={{...styles.centeredText,lineHeight:'100px',fontSize:25,}}>
             {numeral(roomObj.temp).format('0.00')+"°F"}
@@ -56,7 +58,8 @@ const COMPONENT_NAME = ({
         </div>
         <div style={{...styles.split,height:100}} onClick={()=>!disabled&&updateTargetSelect(roomName,'target_humidity',roomObj)}>
           <div style={{...styles.subHeader,position:'absolute',top:2,right:15,color:'red'}}>
-            {roomObj.humidifyingMode?'humidifying to: ':'dehumidifying to: '}{numeral(roomObj.target_humidity).format('0.0')+"%"}
+            {!disabled&&(roomObj.humidifyingMode?'humidifying to: ':'dehumidifying to: ')}
+            {!disabled&&numeral(roomObj.target_humidity).format('0.0')+"%"}
           </div>
           <div style={{...styles.centeredText,lineHeight:'100px',fontSize:25,}}>
             {numeral(roomObj.humidity).format('0.00')+"%"}
@@ -90,23 +93,11 @@ const COMPONENT_NAME = ({
           <RaisedButton
             label="Save"
             primary={true}
+            disabled={error||!updateTarget.value||updateTarget.value<10}
             onClick={()=>{
               var path = updateTarget.roomName+"/"+updateTarget.dataType
               firebase.update(path,{value:Number(updateTarget.value),date_modified:NOW()})
               handleStatusChange(updateTarget.roomName)
-              // var stateKey = updateTarget.dataType=='target_temp'?'temp':'humidity'
-              // var comparisonKey = updateTarget.dataType=='target_temp'?'coolingMode':'humidifyingMode'
-              // var shouldTargetBeHigher = comparisonKey=='coolingMode'?(!updateTarget.roomObj['coolingMode']):updateTarget['humidifyingMode']
-              // var onStatusKey = updateTarget.dataType=='target_temp'?'isTempOn':'isHumOn'
-              // var updatedStatus = compareTargetToState(
-              //   updateTarget.value,
-              //   updateTarget.roomObj[stateKey],
-              //   updateTarget.roomObj[comparisonKey]
-              // )
-              // console.log(updatedStatus);
-              // var updateValue = {}
-              // updateValue[onStatusKey]=updatedStatus
-              // firebase.update(updateTarget.roomName,updateValue)
               setOpenTargetSelect(false)
             }}
           />,
@@ -119,13 +110,14 @@ const COMPONENT_NAME = ({
       >
         <TextField
           value={updateTarget.value}
-          onChange={(e,value)=>setupdateTarget({...updateTarget,value:value})}
+          onChange={(e,value)=>updateUpdateTarget({value:value})}
           hintText="target value"
           type='number'
           fullWidth
           inputStyle={{textAlign:'center'}}
           autoFocus
         />
+      {error&&<p style={{color:'red'}}>{error}</p>}
         <Toggle
           label={updateTarget.dataType=='target_temp'?props[updateTarget.roomName].coolingMode?"Cooling Mode":'Heating Mode':props[updateTarget.roomName].humidifyingMode?"Humidifying Mode":'Dehumidifying Mode'}
           toggled={updateTarget.dataType=='target_temp'?props[updateTarget.roomName].coolingMode:props[updateTarget.roomName].humidifyingMode}
@@ -137,8 +129,7 @@ const COMPONENT_NAME = ({
               updateValue.humidifyingMode=value
             }
             firebase.update(updateTarget.roomName,updateValue)
-            handleStatusChange(updateTarget.roomName)
-            setOpenTargetSelect(false);
+            handleStatusChange(updateTarget.roomName,setTimeout(()=>setOpenTargetSelect(false),500))
           }}
         />
       </Dialog>}
@@ -217,11 +208,43 @@ export default compose(
   }),
   muiThemeable(),
   withState('openTargetSelect','setOpenTargetSelect',false),
-  withState('updateTarget','setupdateTarget',{}),
+  withState('updateTarget','setUpdateTarget',{}),
+  withState('error','setError',false),
   withHandlers({
+    updateUpdateTarget:props => ({value}) => {
+      console.log(value);
+      props.setUpdateTarget({...props.updateTarget,value:value})
+      var limit = {temp:{min:35,max:99,minFirstDigit:3},hum:{min:20,max:99,minFirstDigit:2}};
+      var dataType = props.updateTarget.dataType=='target_temp'?'temp':'hum'
+      if(!value>0){props.setError(false);return}
+      if(dataType=='temp'){
+        console.log(dataType,value,limit);
+        if(value < limit.temp.minFirstDigit){
+          console.log('Failed At: minFirstDigit');
+          props.setError('Minimum temperature value is '+limit.temp.min)
+        }else if(value > 10 && (value < limit.temp.min || value > limit.temp.max)){
+          console.log('Failed At: not between limits');
+          props.setError('Temperature should be between '+limit.temp.min+' and '+limit.temp.max)
+        }else{
+          props.setError(false)
+        }
+      }else if(dataType=='hum'){
+        if(value < limit.hum.minFirstDigit){
+          console.log('Failed At: minFirstDigit');
+          props.setError('Minimum humidity value is '+limit.hum.min)
+        }else if(value > 10 && (value < limit.hum.min || value > limit.hum.max)){
+          console.log('Failed At: not between limits');
+          props.setError('Humidity should be between '+limit.hum.min+' and '+limit.hum.max)
+        }else{
+          props.setError(false)
+        }
+      }else{
+        props.setError(false)
+      }
+    },
     updateTargetSelect:props=>(roomName,dataType,roomObj)=>{
       props.setOpenTargetSelect(true),
-      props.setupdateTarget({roomName:roomName,dataType:dataType,value:props[roomName][dataType],roomObj:roomObj})
+      props.setUpdateTarget({roomName:roomName,dataType:dataType,value:props[roomName][dataType],roomObj:roomObj})
     },
     compareTargetToState:props=>(target,currentState,shouldTargetBeHigher)=>{
       //console.log(target,currentState,shouldTargetBeHigher);
